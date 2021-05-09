@@ -210,6 +210,7 @@ public class RemoteSpotlight {
         while (true) {
             // handle incoming messages
             Socket clientSocket = serverSocket.accept();
+            clientSocket.setSoTimeout(5000);
             System.out.println("Accepted connection from client: "  + clientSocket.getRemoteSocketAddress() );
 
             In  in  = new In (clientSocket);
@@ -226,7 +227,7 @@ public class RemoteSpotlight {
                 // wait for client messages
                 String s;
                 while ((s = in.readLine()) != null) {
-                    System.out.println( "Received Client message: "  + s );
+                    //System.out.println( "Received Client message: "  + s );
                     handleMessage(s);
                 }
             
