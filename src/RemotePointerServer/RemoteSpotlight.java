@@ -290,8 +290,13 @@ public class RemoteSpotlight {
             clipboard.setContents(new StringSelection(remotePointerText), new StringSelection(remotePointerText));
                     
             // paste from clipboard
-            robot.keyPress(KeyEvent.VK_CONTROL); robot.keyPress(KeyEvent.VK_V);
-            robot.keyRelease(KeyEvent.VK_V); robot.keyRelease(KeyEvent.VK_CONTROL);
+            if(System.getProperty("os.name").toLowerCase().contains("mac")) {
+                robot.keyPress(KeyEvent.VK_META); robot.keyPress(KeyEvent.VK_V);
+                robot.keyRelease(KeyEvent.VK_V); robot.keyRelease(KeyEvent.VK_META);
+            } else {
+                robot.keyPress(KeyEvent.VK_CONTROL); robot.keyPress(KeyEvent.VK_V);
+                robot.keyRelease(KeyEvent.VK_V); robot.keyRelease(KeyEvent.VK_CONTROL);
+            }
                     
             // restore clipboard content
             if(prevClipboardText != null) {
