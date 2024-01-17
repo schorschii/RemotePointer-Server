@@ -95,7 +95,7 @@ public class AboutWindow extends javax.swing.JFrame {
         jLabelMouseSpeed.setText(bundle.getString("AboutWindow.jLabelMouseSpeed.text")); // NOI18N
         jLabelMouseSpeed.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
 
-        jSliderPointerSpeed.setMaximum(50);
+        jSliderPointerSpeed.setMaximum(80);
         jSliderPointerSpeed.setMinimum(10);
         jSliderPointerSpeed.setValue(25);
         jSliderPointerSpeed.addChangeListener(new javax.swing.event.ChangeListener() {
