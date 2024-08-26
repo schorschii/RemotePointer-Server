@@ -6,7 +6,6 @@
 package RemotePointerServer;
 
 import java.awt.AWTException;
-import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.MenuItem;
 import java.awt.MouseInfo;
@@ -312,15 +311,12 @@ public class RemoteSpotlight {
                 fp.update(x*rs.pointerSpeed, y*rs.pointerSpeed);
             }
             else if(parts[0].equals("M")) {
-                Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
                 double old_x = MouseInfo.getPointerInfo().getLocation().getX();
                 double old_y = MouseInfo.getPointerInfo().getLocation().getY();
                 int x = (int)((Integer.parseInt(parts[1])*rs.mouseSpeed)+old_x);
                 int y = (int)((Integer.parseInt(parts[2])*rs.mouseSpeed)+old_y);
                 if(x<0) x = 0;
                 if(y<0) y = 0;
-                if(x>screenSize.getWidth()) x = (int)screenSize.getWidth();
-                if(y>screenSize.getHeight()) y = (int)screenSize.getHeight();
                 mRobot.mouseMove(x, y);
             }
         }
