@@ -1,4 +1,8 @@
 #pragma once
 
-void create_listener(int port, const char* connection_code);
+#define pstate_ptr  void*
+
+int listener_create(unsigned short port, const char* connectionCode, pstate_ptr pstate);
+int listener_run(BOOL* running, pstate_ptr pstate);
+int listener_close(pstate_ptr pstate);
 

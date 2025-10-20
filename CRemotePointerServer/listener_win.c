@@ -1,20 +1,114 @@
 
-
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-//#include <unistd.h>
-//#include <arpa/inet.h>
-//#include <sys/socket.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#pragma comment(lib, "ws2_32.lib")
 
 #include "listener.h"
 
+typedef struct {
+    SOCKET socket;
+} listener_state;
+
+#define BACKLOG 10
+
+int listener_create(unsigned short port, const char* connectionCode, pstate_ptr *pstate) {
+	WSADATA wsa_data = { 0 };
+    SOCKET listener_socket = INVALID_SOCKET;
+	struct sockaddr_in server_addr = { 0 };
+    u_long mode = 1;
+
+    /* Initialize Winsock */
+    if (WSAStartup(MAKEWORD(2, 2), &wsa_data) != 0) {
+        fprintf_s(stderr, "WSAStartup failed\n");
+        return 1;
+    }
+
+    /* Create a socket */
+    listener_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (listener_socket == INVALID_SOCKET) {
+        fprintf_s(stderr, "socket failed");
+        WSACleanup();
+        return 1;
+    }
+    
+	/* Set socket to non-blocking */
+    mode = 1; // 1 to enable non-blocking, 0 to disable
+    if (ioctlsocket(listener_socket, FIONBIO, &mode) != 0) {
+        fprintf(stderr, "ioctlsocket failed with error: %ld\n", WSAGetLastError());
+    }
+
+	/* Bind the socket */
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_port = htons(port);
+    if (bind(listener_socket, (SOCKADDR*)&server_addr, sizeof(server_addr)) == SOCKET_ERROR) {
+        fprintf_s(stderr, "bind failed");
+        closesocket(listener_socket);
+        WSACleanup();
+        return 1;
+    }
+
+	/* Start listening */
+    if (listen(listener_socket, BACKLOG) == SOCKET_ERROR) {
+        fprintf_s(stderr, "listen failed");
+        closesocket(listener_socket);
+        WSACleanup();
+        return 1;
+    }
+
+    /* Alloc & set state */
+    *pstate = malloc(sizeof(listener_state));
+    if (*pstate == NULL) {
+        fprintf_s(stderr, "malloc failed");
+        closesocket(listener_socket);
+        WSACleanup();
+        return 1;
+	}
+    ((listener_state*)*pstate)->socket = listener_socket;
 
 
-void create_listener(int controlPort, const char* connectionCode) {
-
+    printf("Server listening on port %d...\n", port);
+    return 0;
  }
 
+int listener_close(pstate_ptr *pstate) {
+	listener_state* state = (listener_state*)*pstate;
+    closesocket(state->socket);
+    WSACleanup();
+
+    free(*pstate);
+    return 0;
+}
+
+int listener_run(BOOL *running, pstate_ptr *pstate) {
+    listener_state* state = (listener_state*)*pstate;
+
+    // Main loop to accept clients
+    while (*running) {
+        // 5. Accept a connection
+        struct sockaddr_in client = { 0 };
+        int clientLen = sizeof(client);
+        SOCKET clientSock = accept(state->socket, (SOCKADDR*)&client, &clientLen);
+        if (clientSock == INVALID_SOCKET) {
+           /* fprintf_s(stderr, "accept failed");
+            closesocket(clientSock);
+            WSACleanup();
+            return 1;*/
+			Sleep(100);
+        }
+        else {
+            printf("Connection accepted.\n");
+
+            // Close the client socket
+            closesocket(clientSock);
+        }
+    }
+}
+
+
+void handleMessage(const char* s) {
+}
 
 
 /*

@@ -12,7 +12,7 @@ endif()
 project ("CRemotePointer-Server")
 
 # Add source to this project's executable.
-add_executable (CRemotePointer-Server "CRemotePointer-Server.c" "listener.c")
+add_executable (CRemotePointer-Server "CRemotePointer-Server.c" "listener_win.c" "listener.h")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET CRemotePointer-Server PROPERTY CXX_STANDARD 20)
