@@ -13,7 +13,7 @@
 
 static bool update = false;
 
-int handle_message(const char* s)
+int handle_message(const char* s, const runtime_settings *settings)
 {
     if (s == NULL) {
         return -1;
@@ -107,6 +107,9 @@ int handle_message(const char* s)
 		send_key(CMN_KEYCODE_F12);
     }
     else if (strncmp(s, "TEXT|", 5) == 0) {
+
+		//// NEED PAID VERSION TO TEST THIS FEATURE
+
   //      /* Get start of text to copy */
   //      const char* remote_pointer_text = s + 5;
 
@@ -128,81 +131,29 @@ int handle_message(const char* s)
 		//set_clipboard_text(prev_clipboard_text);
     }
     else {
-		size_t count = 0;
-        char** parts = NULL;
+        if (update && s[0] == 'S') {
+            float x, y;
+            int rv;
+            rv = sscanf(s, "S|%f|%f", &x, &y);
 
-		printf("Received unknown message: %s", s);
-        return 0;
-
-		//parts = split_string(s, '|', &count);
-
-        if (update && parts[0][0] == 'S') {
-           // float x = (float)atof(parts[1]);
-           // float y = (float)atof(parts[2]);
+            printf("HERE %s", s); // IDK what triggers this or what it does lol
             // fp_update(x * rs.pointerSpeed, y * rs.pointerSpeed);
         }
-        else if (parts[0][0] == 'M') {
-            int x = 0, y = 0;
-            // double old_x = MouseInfo.getPointerInfo().getLocation().getX();
-            // double old_y = MouseInfo.getPointerInfo().getLocation().getY();
-           // int x = (int)(atoi(parts[1])  * rs.mouseSpeed  + old_x );
-           // int y = (int)(atoi(parts[2])  * rs.mouseSpeed  + old_y );
+        else if (s[0] == 'M') {
+            int x, y, mx, my, rv;
+			rv = sscanf(s, "M|%d|%d", &x, &y);
+
+            mouse_get_position(&mx, &my);
+            x = (int)(x * settings->mouse_speed + mx);
+            y = (int)(y * settings->mouse_speed + my);
             if (x < 0) x = 0;
             if (y < 0) y = 0;
-            mouse_move(x, y);
-
-            free_split(parts, count);
+			mouse_move(x, y);
+        }
+        else {
+			printf("Ignoring message: '%s'\n", s);
         }
     }
 
     return 0;
-}
-
-char** split_string(const char* str, char delimiter, size_t* out_count)
-{
-    if (!str) return NULL;
-
-    size_t count = 1;
-    for (const char* p = str; *p; p++) {
-        if (*p == delimiter) count++;
-    }
-
-    char** result = malloc((count + 1) * sizeof(char*));
-    if (!result) return NULL;
-
-    size_t idx = 0;
-    const char* start = str;
-    for (const char* p = str; ; p++) {
-        if (*p == delimiter || *p == '\0') {
-            size_t len = p - start;
-            char* token = malloc(len + 1);
-            if (token == NULL) {
-                // Free previously allocated tokens
-                for (size_t j = 0; j < idx; j++)
-                    free(result[j]);
-                free(result);
-                return NULL;
-			}
-            memcpy(token, start, len);
-            token[len] = '\0';
-            result[idx++] = token;
-
-            if (*p == '\0') break;
-            start = p + 1;
-        }
-    }
-
-
-    // Set the extra slot to NULL for safety (optional, but good practice)
-    result[idx] = NULL;
-
-    if (out_count) *out_count = count;
-    return result;
-}
-
-void free_split(char** tokens, size_t count)
-{
-    for (size_t i = 0; i < count; i++)
-        free(tokens[i]);
-    free((void*)tokens);
 }

@@ -6,17 +6,13 @@
 
 #include "listener.h"
 #include "input.h"
+#include "runtime_settings.h"
 
-typedef struct {
-	char conn_code[CONNECTION_CODE_LEN + 1];
-    SOCKET socket;
-} listener_state;
 
 #define SLEEPTMS		10
 #define BACKLOG         10
-#define PSTATE(ptr)     ((listener_state*)ptr)
 
-int listener_create(unsigned short port, const char* conn_code, pstate_ptr *p)
+int listener_create(listener_state *p)
 {
 	WSADATA wsa_data = { 0 };
     SOCKET listener_socket = INVALID_SOCKET;
@@ -46,7 +42,7 @@ int listener_create(unsigned short port, const char* conn_code, pstate_ptr *p)
 	/* Bind the socket */
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
-    server_addr.sin_port = htons(port);
+    server_addr.sin_port = htons(p->port);
     if (bind(listener_socket, (SOCKADDR*)&server_addr, sizeof(server_addr)) == SOCKET_ERROR) {
         fprintf_s(stderr, "bind failed");
         closesocket(listener_socket);
@@ -62,27 +58,16 @@ int listener_create(unsigned short port, const char* conn_code, pstate_ptr *p)
         return 1;
     }
 
-    /* Alloc & set state */
-    *p = malloc(sizeof(listener_state));
-    if (*p == NULL) {
-        fprintf_s(stderr, "malloc failed");
-        closesocket(listener_socket);
-        WSACleanup();
-        return 1;
-	}
-    PSTATE(*p)->socket = listener_socket;
-	strncpy_s(PSTATE(*p)->conn_code, sizeof(PSTATE(*p)->conn_code), conn_code, CONNECTION_CODE_LEN);
-
-    printf("Server listening on port %d...\n", port);
+	p->socket_fd.big_dummy = (long)listener_socket;
+    printf("Server listening on port %d...\n", p->port);
     return 0;
  }
 
-int listener_close(pstate_ptr p)
+int listener_close(const listener_state* pstate)
 {
-    closesocket(PSTATE(p)->socket);
+    closesocket((SOCKET)pstate->socket_fd.big_dummy);
     WSACleanup();
 
-    free(p);
     return 0;
 }
 
@@ -151,51 +136,55 @@ static int _get_line(SOCKET s, char* recvbuf, const int bufsize)
     return 0;
 }
 
-static int _verify_auth_code(const bool* running, SOCKET c_socket, const pstate_ptr p)
+static int _verify_auth_code(const listener_state* p, SOCKET c_socket)
 {
     char recvbuf[64] = { 0 };
     int rv;
 
-    while (*running) {
+    while (p->running) {
         rv = _get_line(c_socket, recvbuf, sizeof(recvbuf));
         if (rv == 1) return 1;
         else if (rv == 0) break;
 
         Sleep(SLEEPTMS);
     }
-    
-    /* Trim off newline */
-    str_trim(recvbuf);
+
+	/* Trim off newline char from conn code */
+    for (int i = 0; i < (int)strlen(recvbuf); i++) {
+        if (recvbuf[i] == '\n') {
+            recvbuf[i] = '\0';
+            break;
+        }
+    }
 
     /* Compare connection codes (or whatever client was able to send) */
     if (strlen(recvbuf) != CONNECTION_CODE_LEN) {
         send(c_socket, AUTHFAILED_MSG, (int)strlen(AUTHFAILED_MSG), 0);
         fprintf_s(stderr, "Wrong AuthCode length: '%d', expecting: '%d'\n", 
-            (int)strlen(str_trim(recvbuf)), CONNECTION_CODE_LEN);
+            (int)strlen(recvbuf), CONNECTION_CODE_LEN);
         return 1;
 	}
-
-    if (strncmp(PSTATE(p)->conn_code, recvbuf, CONNECTION_CODE_LEN)) {
+    
+    if (memcmp(p->settings.connection_code, recvbuf, CONNECTION_CODE_LEN)) {
         send(c_socket, AUTHFAILED_MSG, (int)strlen(AUTHFAILED_MSG), 0);
         fprintf_s(stderr, "Wrong AuthCode: '%s', expecting: '%s'\n",
-            recvbuf, PSTATE(p)->conn_code);
+            recvbuf, p->settings.connection_code);
         return 1;
     }
 
     return 0;
 }
 
-static int _process_messages(const bool* running, SOCKET c_socket)
+static int _process_messages(const listener_state* p, SOCKET c_socket)
 {
     char recvbuf[1024] = { 0 };
     int rv;
 
-    while (*running) {
+    while (p->running) {
         Sleep(SLEEPTMS);
         rv = _get_line(c_socket, recvbuf, sizeof(recvbuf));
         if (rv == 0) {
-			printf("Received message: %s", recvbuf);
-			handle_message(recvbuf);
+			handle_message(recvbuf, &p->settings);
         }
         else if (rv == 1) return 1;
     }
@@ -204,16 +193,15 @@ static int _process_messages(const bool* running, SOCKET c_socket)
 }
 
 /* Accept clients, but only need to handle one at a time... */
-int listener_run(const bool* running, const pstate_ptr p)
+int listener_run(const listener_state* p)
 {
     SOCKET c_socket;
     struct sockaddr_in client = { 0 };
     int c_len = sizeof(client);
 
-    while (*running)
-    {
+    while (p->running) {
         /* Accept a client */
-        c_socket = accept(PSTATE(p)->socket, (SOCKADDR*)&client, &c_len);
+        c_socket = accept((SOCKET)p->socket_fd.big_dummy, (SOCKADDR*)&client, &c_len);
         if (c_socket == INVALID_SOCKET) {
             if (WSAGetLastError() != WSAEWOULDBLOCK) {
                 fprintf_s(stderr, "accept failed, err code: %d\n", WSAGetLastError());
@@ -229,13 +217,13 @@ int listener_run(const bool* running, const pstate_ptr p)
         }
 
         /* Receive connection auth code and verify */
-        if (_verify_auth_code(running, c_socket, p)) {
+        if (_verify_auth_code(p, c_socket)) {
             goto close_socket;
         }
         printf("Client authenticated successfully.\n");
 
         /* Handle client messages */
-        _process_messages(running, c_socket);
+        _process_messages(p, c_socket);
 
     close_socket:
         /* Close the client socket */

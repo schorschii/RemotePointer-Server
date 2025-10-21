@@ -4,6 +4,7 @@
 * Created: 2025-10-20
 */
 #pragma once
+#include "runtime_settings.h"
 
 #define CMN_KEYCODE_NONE				(0)
 #define CMN_KEYCODE_PAGE_UP				(1)
@@ -37,13 +38,20 @@ int mouse_press(const int cmn_button);
 int mouse_release(const int cmn_button);
 int mouse_move(const int x, const int y); // dx, dy ?
 
+/***
+* Get current mouse cursor position
+*
+* Parameters:
+*  int* x - pointer to store X coordinate
+*  int* y - pointer to store Y coordinate
+*
+* Returns:
+* 0 on success, non-zero on failure
+*/
+int mouse_get_position(int* x, int* y);
+
 int set_clipboard_text(const char* text);
 int get_clipboard_text(char** outText);
 
-/* Message to input handler */
-int handle_message(const char* msg);
-
-
-/* Helper functions */
-char** split_string(const char* str, char delimiter, size_t* out_count);
-void free_split(char** tokens, size_t count);
+/* Message to input handler dispatcher */
+int handle_message(const char* msg, const runtime_settings *settings);

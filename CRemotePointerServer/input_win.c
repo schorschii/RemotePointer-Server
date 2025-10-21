@@ -39,7 +39,7 @@ static int _send_key(const int vk_code, bool down)
     return SendInput(1, &in, sizeof(INPUT));
 }
 
-static int map_cmn_keycode_to_vk(const int cmn_keycode)
+static int _map_cmn_keycode_to_vk(const int cmn_keycode)
 {
     switch (cmn_keycode) {
     case CMN_KEYCODE_PAGE_UP:
@@ -91,8 +91,8 @@ static int map_cmn_keycode_to_vk(const int cmn_keycode)
 
 int send_key(const int cmn_keycode)
 {
-	_send_key(map_cmn_keycode_to_vk(cmn_keycode), true);
-    _send_key(map_cmn_keycode_to_vk(cmn_keycode), false);
+	_send_key(_map_cmn_keycode_to_vk(cmn_keycode), true);
+    _send_key(_map_cmn_keycode_to_vk(cmn_keycode), false);
 
     return 0;
 }
@@ -125,6 +125,18 @@ int mouse_move(const int dx, const int dy)
     in.mi.dy = dy;
 
     return SendInput(1, &in, sizeof(INPUT));
+}
+
+int mouse_get_position(int* x, int* y)
+{
+    POINT p;
+    if (!GetCursorPos(&p)) {
+        return 1;
+    }
+
+    *x = p.x;
+    *y = p.y;
+    return 0;
 }
 
 int set_clipboard_text(const char* text) {
@@ -167,3 +179,4 @@ int get_clipboard_text(char** outText)
 {
     return 0;
 }
+
