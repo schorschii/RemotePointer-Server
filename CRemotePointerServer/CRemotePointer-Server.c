@@ -5,22 +5,18 @@
 #include "listener.h"
 
 
-BOOL running = TRUE;
+bool running = TRUE;
 
-unsigned int __stdcall ThreadFunction(void* pData) {
-    pstate_ptr data = (pstate_ptr)pData;
-
+static unsigned int __stdcall ThreadFunction(void* pData)
+{
     printf("Thread started\n");
-
-	listener_run(&running, &data);
-
-
-	_endthreadex(0);
+	listener_run(&running, (pstate_ptr)pData);
     return 0;
 }
 
 
-int main() {
+int main()
+{
 	HANDLE h_thread;
 	unsigned int threadID;
 
@@ -54,7 +50,7 @@ int main() {
 
 
 
-	listener_close(&pstate);
+	listener_close(pstate);
 	printf("Listener closed.\n");
 
 	// Placeholder for server implementation
