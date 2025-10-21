@@ -36,7 +36,7 @@
 int send_key(const int cmn_keycode);
 int mouse_press(const int cmn_button);
 int mouse_release(const int cmn_button);
-int mouse_move(const int x, const int y); // dx, dy ?
+int mouse_move(const int dx, const int dy);
 
 /***
 * Get current mouse cursor position

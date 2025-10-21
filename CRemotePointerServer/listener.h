@@ -26,5 +26,4 @@ int listener_run(const listener_state *pstate);
 int listener_close(const listener_state *pstate);
 
 /* Helper functions */
-char* str_trim(char* str);
 int index_of(const char* str, char ch);

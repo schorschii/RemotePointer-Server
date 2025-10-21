@@ -1,7 +1,8 @@
 #include <Windows.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <process.h>  // For _beginthreadex and _endthreadex
+#include <time.h>
+#include <process.h>
 
 #include "listener.h"
 
@@ -15,7 +16,7 @@ static unsigned int __stdcall ThreadFunction(void* pData)
 
 static void generate_connection_code(char* conn_code)
 {
-	srand(time(NULL));
+	srand((unsigned int)time(NULL));
 	for (int i = 0; i < CONNECTION_CODE_LEN; i++) {
 		char key = (char)(rand() % 10);
 		conn_code[i] = '0' + key;

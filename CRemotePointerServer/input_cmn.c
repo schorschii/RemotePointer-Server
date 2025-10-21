@@ -135,19 +135,27 @@ int handle_message(const char* s, const runtime_settings *settings)
             float x, y;
             int rv;
             rv = sscanf(s, "S|%f|%f", &x, &y);
+            if (rv != 2) {
+                fprintf(stderr, "Ignoring malformed S message: '%s'\n", s);
+                return -1;
+            }
 
-            printf("HERE %s", s); // IDK what triggers this or what it does lol
             // fp_update(x * rs.pointerSpeed, y * rs.pointerSpeed);
         }
         else if (s[0] == 'M') {
             int x, y, mx, my, rv;
 			rv = sscanf(s, "M|%d|%d", &x, &y);
+            if (rv != 2) {
+				fprintf(stderr, "Ignoring malformed M message: '%s'\n", s);
+				return -1;
+            }
 
             mouse_get_position(&mx, &my);
-            x = (int)(x * settings->mouse_speed + mx);
-            y = (int)(y * settings->mouse_speed + my);
-            if (x < 0) x = 0;
-            if (y < 0) y = 0;
+            x = (int)(x * settings->mouse_speed);
+            y = (int)(y * settings->mouse_speed);
+			//printf("Moving mouse to: %d,%d\n", x, y);
+          /*  if (x < 0) x = 0;
+            if (y < 0) y = 0;*/
 			mouse_move(x, y);
         }
         else {

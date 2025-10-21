@@ -9,7 +9,7 @@
 #include "runtime_settings.h"
 
 
-#define SLEEPTMS		10
+#define SLEEPTMS		5
 #define BACKLOG         10
 
 int listener_create(listener_state *p)
