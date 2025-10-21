@@ -5,12 +5,14 @@
 #pragma comment(lib, "ws2_32.lib")
 
 #include "listener.h"
+#include "input.h"
 
 typedef struct {
 	char conn_code[CONNECTION_CODE_LEN + 1];
     SOCKET socket;
 } listener_state;
 
+#define SLEEPTMS		10
 #define BACKLOG         10
 #define PSTATE(ptr)     ((listener_state*)ptr)
 
@@ -84,7 +86,7 @@ int listener_close(pstate_ptr p)
     return 0;
 }
 
-static int send_greeting(SOCKET c_socket)
+static int _send_greeting(SOCKET c_socket)
 {
     int bytes_sent = send(c_socket, GREETING_MSG, (int)strlen(GREETING_MSG), 0);
     if (bytes_sent == SOCKET_ERROR) {
@@ -94,31 +96,72 @@ static int send_greeting(SOCKET c_socket)
     return 0;
 }
 
-static int verify_auth_code(const bool* running, SOCKET c_socket, const pstate_ptr p)
+/**
+ * Check recv() return value for errors or disconnect.
+ * Returns:
+ *   0 - no error
+ *   1 - error or disconnect
+ */
+static int _recv_rv_check(int rv)
+{
+    if (rv < 0 && WSAGetLastError() != WSAEWOULDBLOCK) {
+        fprintf_s(stderr, "recv() failed, err code: %d\n", WSAGetLastError());
+        return 1;
+    }
+    if (rv == 0) {
+		printf("Client disconnected.\n");
+        return 1;
+    }
+    return 0;
+}
+
+/**
+ * Peek and read a full line from socket.
+ * Returns:
+ *   0 - full line read into recvbuf
+ *   1 - error or disconnect
+ *  -1 - no full line yet
+ */
+static int _get_line(SOCKET s, char* recvbuf, const int bufsize)
+{
+    int rv, nl_idx;
+
+    memset(recvbuf, 0, sizeof(recvbuf));
+    rv = recv(s, recvbuf, bufsize - 1, MSG_PEEK);
+    if (_recv_rv_check(rv)) {
+        return 1;
+    }
+
+    nl_idx = index_of(recvbuf, '\n');
+    if (nl_idx == -1) {
+        /* no full line yet */
+        /* ...or client is sending a resp bigger than expected */
+        return -1;
+    }
+
+    /* full line available, drain it */
+    rv = recv(s, recvbuf, nl_idx + 1, 0);
+    if (_recv_rv_check(rv)) {
+        return 1;
+    }
+
+    /* Make a c_string by null terminating it */
+    recvbuf[rv] = '\0'; 
+
+    return 0;
+}
+
+static int _verify_auth_code(const bool* running, SOCKET c_socket, const pstate_ptr p)
 {
     char recvbuf[64] = { 0 };
     int rv;
 
     while (*running) {
-        rv = recv(c_socket, recvbuf, sizeof(recvbuf) - 1, MSG_PEEK);
-        
-        if (rv < 0 && WSAGetLastError() != WSAEWOULDBLOCK) {
-            fprintf_s(stderr, "recv() failed, err code: %d\n", WSAGetLastError());
-            return 1;
-        }
-		if (rv == 0) {
-			return 1; // graceful disconnect
-        }
+        rv = _get_line(c_socket, recvbuf, sizeof(recvbuf));
+        if (rv == 1) return 1;
+        else if (rv == 0) break;
 
-		if(index_of(recvbuf, '\n') == -1) {
-			// not full line yet (or client is sending a big bad response)
-            Sleep(1);
-            continue;
-        }
-
-		// full line available, drain it... technically should only read up to \n...
-        recv(c_socket, recvbuf, sizeof(recvbuf) - 1, 0);
-        break;
+        Sleep(SLEEPTMS);
     }
     
     /* Trim off newline */
@@ -142,35 +185,19 @@ static int verify_auth_code(const bool* running, SOCKET c_socket, const pstate_p
     return 0;
 }
 
-static int process_messages(const bool* running, SOCKET c_socket)
+static int _process_messages(const bool* running, SOCKET c_socket)
 {
-    char recvbuf[128] = { 0 };
-    int bytes_received = 0;
-    while (*running)
-    {
-        int retval = recv(c_socket, recvbuf, sizeof(recvbuf) - 1, 0);
-        if (retval > 0) {
-            bytes_received += retval;
+    char recvbuf[1024] = { 0 };
+    int rv;
 
-
-            if (bytes_received > 0) {
-                recvbuf[retval] = '\0'; // Null-terminate the received data
-                printf("recieved: % s\n", recvbuf);
-                bytes_received = 0; // Reset for next message
-			}
-
+    while (*running) {
+        Sleep(SLEEPTMS);
+        rv = _get_line(c_socket, recvbuf, sizeof(recvbuf));
+        if (rv == 0) {
+			printf("Received message: %s", recvbuf);
+			handle_message(recvbuf);
         }
-        else if (retval == 0) {
-            // Connection closed
-            printf("connection closed\n");
-            // TODO:
-            return 1;
-        }
-        else {
-            // TODO:
-           // fprintf_s(stderr, "recv failed");
-          //  return 1;
-        }
+        else if (rv == 1) return 1;
     }
 
     return 0;
@@ -180,35 +207,35 @@ static int process_messages(const bool* running, SOCKET c_socket)
 int listener_run(const bool* running, const pstate_ptr p)
 {
     SOCKET c_socket;
-    struct sockaddr_in client = {0};
-    int clientLen = sizeof(client);
- 
+    struct sockaddr_in client = { 0 };
+    int c_len = sizeof(client);
+
     while (*running)
     {
-		/* Accept a client */
-        c_socket = accept(PSTATE(p)->socket, (SOCKADDR*)&client, & clientLen);
+        /* Accept a client */
+        c_socket = accept(PSTATE(p)->socket, (SOCKADDR*)&client, &c_len);
         if (c_socket == INVALID_SOCKET) {
             if (WSAGetLastError() != WSAEWOULDBLOCK) {
                 fprintf_s(stderr, "accept failed, err code: %d\n", WSAGetLastError());
-			}
-            Sleep(10);
+            }
+            Sleep(SLEEPTMS);
             continue;
         }
         printf("Connection accepted.\n");
 
         /* Send greeting message as part of original Java code */
-        if (send_greeting(c_socket)) {
+        if (_send_greeting(c_socket)) {
             goto close_socket;
         }
 
         /* Receive connection auth code and verify */
-        if (verify_auth_code(running, c_socket, p)) {
+        if (_verify_auth_code(running, c_socket, p)) {
             goto close_socket;
         }
-		printf("Client authenticated successfully.\n");
+        printf("Client authenticated successfully.\n");
 
         /* Handle client messages */
-        process_messages(running, c_socket);
+        _process_messages(running, c_socket);
 
     close_socket:
         /* Close the client socket */
@@ -218,94 +245,3 @@ int listener_run(const bool* running, const pstate_ptr p)
     return 0;
 }
 
-
-static void handleMessage(const char* s) { }
-
-
-/*
-
-    // interprets a message from the client app
-    private static void handleMessage(String s) throws IOException {
-        if(s.equals("START"))          { update = true; fp.setVisible(true); }
-        else if(s.equals("STOP"))      { update = false; fp.setVisible(false); }
-        else if(s.equals("PREV"))      { sendKey(KeyEvent.VK_PAGE_UP); }
-        else if(s.equals("NEXT"))      { sendKey(KeyEvent.VK_PAGE_DOWN); }
-        else if(s.equals("RETURN"))    { sendKey(KeyEvent.VK_ENTER); }
-        else if(s.equals("BACKSPACE")) { sendKey(KeyEvent.VK_BACK_SPACE); }
-        else if(s.equals("ESCAPE"))    { sendKey(KeyEvent.VK_ESCAPE); }
-        else if(s.equals("MDOWN"))     { mRobot.mousePress(InputEvent.BUTTON1_MASK); }
-        else if(s.equals("MUP"))       { mRobot.mouseRelease(InputEvent.BUTTON1_MASK); }
-        else if(s.equals("MLEFT"))     { mRobot.mousePress(InputEvent.BUTTON1_MASK); mRobot.mouseRelease(InputEvent.BUTTON1_MASK); }
-        else if(s.equals("MRIGHT"))    { mRobot.mousePress(InputEvent.BUTTON3_MASK); mRobot.mouseRelease(InputEvent.BUTTON3_MASK); }
-        else if(s.equals("UP"))        { sendKey(KeyEvent.VK_UP); }
-        else if(s.equals("DOWN"))      { sendKey(KeyEvent.VK_DOWN); }
-        else if(s.equals("LEFT"))      { sendKey(KeyEvent.VK_LEFT); }
-        else if(s.equals("RIGHT"))     { sendKey(KeyEvent.VK_RIGHT); }
-        else if(s.equals("F1"))        { sendKey(KeyEvent.VK_F1); }
-        else if(s.equals("F2"))        { sendKey(KeyEvent.VK_F2); }
-        else if(s.equals("F3"))        { sendKey(KeyEvent.VK_F3); }
-        else if(s.equals("F4"))        { sendKey(KeyEvent.VK_F4); }
-        else if(s.equals("F5"))        { sendKey(KeyEvent.VK_F5); }
-        else if(s.equals("F6"))        { sendKey(KeyEvent.VK_F6); }
-        else if(s.equals("F7"))        { sendKey(KeyEvent.VK_F7); }
-        else if(s.equals("F8"))        { sendKey(KeyEvent.VK_F8); }
-        else if(s.equals("F9"))        { sendKey(KeyEvent.VK_F9); }
-        else if(s.equals("F10"))       { sendKey(KeyEvent.VK_F10); }
-        else if(s.equals("F11"))       { sendKey(KeyEvent.VK_F11); }
-        else if(s.equals("F12"))       { sendKey(KeyEvent.VK_F12); }
-        else if(s.startsWith("TEXT|")) {
-            // get text from app
-            String remotePointerText = s.substring(5, s.length());
-
-            // get previous clipboard content
-            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-            String prevClipboardText = null;
-            Transferable t = clipboard.getContents( null );
-            if( t.isDataFlavorSupported(DataFlavor.stringFlavor) ) {
-                try {
-                    prevClipboardText = (String)t.getTransferData( DataFlavor.stringFlavor );
-                    System.out.println( "Saving prev clipboard contents: " + prevClipboardText );
-                } catch (UnsupportedFlavorException ex) {
-                    System.out.println( "Unable to get clipboard content for temp saving: " + ex.getMessage() );
-                }
-            }
-
-            // set app text to clipboard
-            clipboard.setContents(new StringSelection(remotePointerText), new StringSelection(remotePointerText));
-
-            // paste from clipboard
-            if(System.getProperty("os.name").toLowerCase().contains("mac")) {
-                robot.keyPress(KeyEvent.VK_META); robot.keyPress(KeyEvent.VK_V);
-                robot.keyRelease(KeyEvent.VK_V); robot.keyRelease(KeyEvent.VK_META);
-            } else {
-                robot.keyPress(KeyEvent.VK_CONTROL); robot.keyPress(KeyEvent.VK_V);
-                robot.keyRelease(KeyEvent.VK_V); robot.keyRelease(KeyEvent.VK_CONTROL);
-            }
-
-            // restore clipboard content
-            if(prevClipboardText != null) {
-                clipboard.setContents(new StringSelection(prevClipboardText), new StringSelection(prevClipboardText));
-            }
-        }
-
-        else {
-            String[] parts = s.split("\\|");
-            if(update && parts[0].equals("S")) {
-                float x = Float.parseFloat(parts[1]);
-                float y = Float.parseFloat(parts[2]);
-                fp.update(x*rs.pointerSpeed, y*rs.pointerSpeed);
-            }
-            else if(parts[0].equals("M")) {
-                double old_x = MouseInfo.getPointerInfo().getLocation().getX();
-                double old_y = MouseInfo.getPointerInfo().getLocation().getY();
-                int x = (int)((Integer.parseInt(parts[1])*rs.mouseSpeed)+old_x);
-                int y = (int)((Integer.parseInt(parts[2])*rs.mouseSpeed)+old_y);
-                if(x<0) x = 0;
-                if(y<0) y = 0;
-                mRobot.mouseMove(x, y);
-            }
-        }
-    }
-}
-
-*/
