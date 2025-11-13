@@ -5,13 +5,7 @@
  */
 package RemotePointerServer;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -55,6 +49,7 @@ public class FramePointer extends javax.swing.JWindow {
         dp.setOpaque(false);
         
         setContentPane(dp);
+
     }
 
     /**
@@ -92,16 +87,16 @@ public class FramePointer extends javax.swing.JWindow {
     int lastPointerStyle = -1;
     
     public void update(float dx, float dy) {
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        int max_x = (int)screenSize.getWidth()-size-borderSize;
-        int max_y = (int)screenSize.getHeight()-size-borderSize;
+        Rectangle bounds = rs.screen.getDefaultConfiguration().getBounds();
+        int max_x = (int) bounds.getWidth() - size - borderSize;
+        int max_y = (int) bounds.getHeight() - size - borderSize;
         x += dx;
         y += dy;
         if(x<0) x = 0;
         if(y<0) y = 0;
         if(x>max_x) x = max_x;
         if(y>max_y) y = max_y;
-        setLocation((int)x, (int)y);
+        setLocation((int)x + bounds.x, (int)y + bounds.y);
         
         if(rs != null && lastPointerStyle != rs.pointerStyle) {
             if(rs.pointerStyle == 3) {
@@ -114,7 +109,7 @@ public class FramePointer extends javax.swing.JWindow {
                 size = 20;
                 borderSize = 2;
             }
-            setSize(size+borderSize+1, size+borderSize+1);
+            setSize(size + borderSize + 1, size + borderSize + 1);
             dp.updateUI();
             setVisible(false);
             setVisible(true);

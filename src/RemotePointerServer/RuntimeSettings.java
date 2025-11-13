@@ -5,6 +5,7 @@
  */
 package RemotePointerServer;
 
+import java.awt.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -22,6 +23,7 @@ public class RuntimeSettings {
     protected float pointerSpeed = (float)25;
     protected float mouseSpeed = (float)1.0;
     protected String connectionCode = "0000";
+    protected GraphicsDevice screen = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0];
     protected String generateNewConnectionCode() {
         return Integer.toString(ThreadLocalRandom.current().nextInt(1000, 9999));
     }
