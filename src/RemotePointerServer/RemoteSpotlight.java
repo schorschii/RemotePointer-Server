@@ -5,15 +5,7 @@
  */
 package RemotePointerServer;
 
-import java.awt.AWTException;
-import java.awt.Image;
-import java.awt.MenuItem;
-import java.awt.MouseInfo;
-import java.awt.PopupMenu;
-import java.awt.Robot;
-import java.awt.SystemTray;
-import java.awt.Toolkit;
-import java.awt.TrayIcon;
+import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
@@ -138,6 +130,7 @@ public class RemoteSpotlight {
         int controlPort       = 4444;
         String hostname       = InetAddress.getLocalHost().getHostName();
         String connectionCode = prefs.get("connection_code", rs.generateNewConnectionCode());
+        int screen = 0;
         boolean showWindow    = true;
 
         // parse command line arguments
@@ -162,6 +155,9 @@ public class RemoteSpotlight {
                 showWindow = false;
                 System.out.println("Start without showing main window: --hidden is set!");
             }
+            if(arg.startsWith("--screen=") && argSplit.length > 1) {
+                screen = Integer.parseInt(argSplit[1]);
+            }
         }
         
         // save new connection code
@@ -172,6 +168,7 @@ public class RemoteSpotlight {
         rs.pointerStyle = Integer.parseInt(prefs.get("pointer_style", "0"));
         rs.pointerSpeed = Float.parseFloat(prefs.get("pointer_speed", "25"));
         rs.mouseSpeed = Float.parseFloat(prefs.get("mouse_speed", "1"));
+        rs.screen = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[screen];
         
         // init GUI
         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -187,7 +184,7 @@ public class RemoteSpotlight {
         
         // init robot & clipboard
         robot = new Robot();
-        mRobot = new Robot();
+        mRobot = new Robot(rs.screen);
         robot.setAutoDelay(10);
 
         // start broadcasting
@@ -311,13 +308,26 @@ public class RemoteSpotlight {
                 fp.update(x*rs.pointerSpeed, y*rs.pointerSpeed);
             }
             else if(parts[0].equals("M")) {
-                double old_x = MouseInfo.getPointerInfo().getLocation().getX();
-                double old_y = MouseInfo.getPointerInfo().getLocation().getY();
-                int x = (int)((Integer.parseInt(parts[1])*rs.mouseSpeed)+old_x);
-                int y = (int)((Integer.parseInt(parts[2])*rs.mouseSpeed)+old_y);
-                if(x<0) x = 0;
-                if(y<0) y = 0;
-                mRobot.mouseMove(x, y);
+                PointerInfo pi = MouseInfo.getPointerInfo();
+                Rectangle b = rs.screen.getDefaultConfiguration().getBounds();
+                if (!pi.getDevice().equals(rs.screen)) {
+                    //If pointer is not on the correct screen, move it to the center of the correct screen
+                    int centerX = b.x + b.width / 2;
+                    int centerY = b.y + b.height / 2;
+                    mRobot.mouseMove(centerX, centerY);
+                } else {
+                    int dx = (int) ((Integer.parseInt(parts[1]) * rs.mouseSpeed));
+                    int dy = (int) ((Integer.parseInt(parts[2]) * rs.mouseSpeed)); 
+                    int old_x = (int) MouseInfo.getPointerInfo().getLocation().getX();
+                    int old_y = (int) MouseInfo.getPointerInfo().getLocation().getY();
+                    int nx = old_x + dx;
+                    int ny = old_y + dy;
+                    int x  = Math.max(b.x, Math.min(b.x + b.width  - 1, nx));
+                    int y  = Math.max(b.y, Math.min(b.y + b.height - 1, ny));
+
+
+                    mRobot.mouseMove(x, y);
+                }
             }
         }
     }
