@@ -25,6 +25,9 @@ jobs:
         run: |
           sudo apt install -y qttools5-dev-tools qtchooser $(cat installer/debian/remotepointer/DEBIAN/control | grep 'Depends' | cut -d: -f2 | sed -e 's/,/ /g' | sed -r 's/\([<>=.0-9]+\)//g')
 
+      - name: Compile language files
+        run: make
+
       - name: Create venv
         run: python3 -m venv venv --system-site-packages
 

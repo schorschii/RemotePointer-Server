@@ -14,9 +14,6 @@ fi
 # cd to working dir
 cd "$(dirname "$0")"
 
-# compile language files
-make -C ../..
-
 # empty / create necessary directories
 if [ -d "$BUILDDIR/$INSTALLDIR" ]; then
     sudo rm -r $BUILDDIR/$INSTALLDIR
