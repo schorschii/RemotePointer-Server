@@ -34,9 +34,11 @@ WizardStyle=modern
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
+Name: "german"; MessagesFile: "compiler:Languages\German.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: "autostarticon"; Description: "Autostart"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Files]
 Source: "..\..\dist\RemotePointerServer\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
@@ -45,6 +47,7 @@ Source: "..\..\dist\RemotePointerServer\*"; DestDir: "{app}"; Flags: ignoreversi
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+Name: "{commonstartup}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "--hidden"; Tasks: autostarticon
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
