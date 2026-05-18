@@ -2,8 +2,8 @@
 set -e
 
 # build .deb package
-INSTALLDIR=/usr/share/certuploader
-BUILDDIR=certuploader
+INSTALLDIR=/usr/share/remotepointer
+BUILDDIR=remotepointer
 
 # check root permissions
 if [ "$EUID" -ne 0 ] && ! groups | grep -q sudo ; then
@@ -18,23 +18,16 @@ cd "$(dirname "$0")"
 make -C ../..
 
 # empty / create necessary directories
-if [ -d "$BUILDDIR/usr" ]; then
-    sudo rm -r $BUILDDIR/usr
+if [ -d "$BUILDDIR/$INSTALLDIR" ]; then
+    sudo rm -r $BUILDDIR/$INSTALLDIR
 fi
 
 # copy files in place
-sudo install -D -m 644 ../../assets/*.png                             -t $BUILDDIR/usr/share/pixmaps
-sudo install -D -m 644 ../../assets/certuploader.desktop              -t $BUILDDIR/usr/share/applications
-sudo install -D -m 644 ../../assets/certuploader-check-expiry.desktop -t $BUILDDIR/etc/xdg/autostart
-sudo install -D -m 644 ../../lang/*.qm                         -t $BUILDDIR/$INSTALLDIR/lang
-sudo install -D -m 644 ../../certuploader/*.py                 -t $BUILDDIR/$INSTALLDIR/certuploader
-sudo install -D -m 644 ../../requirements.txt                  -t $BUILDDIR/$INSTALLDIR
-sudo install -D -m 644 ../../setup.py                          -t $BUILDDIR/$INSTALLDIR
-sudo install -D -m 644 ../../README.md                         -t $BUILDDIR/$INSTALLDIR
+cp -r   ../../dist/RemotePointerServer   $BUILDDIR/$INSTALLDIR
 
 # make binary available in PATH
 sudo mkdir -p $BUILDDIR/usr/bin
-sudo ln -sf   $INSTALLDIR/venv/bin/certuploader     $BUILDDIR/usr/bin/certuploader
+sudo ln -sf   $INSTALLDIR/RemotePointerServer   $BUILDDIR/usr/bin/remotepointer
 
 # set file permissions
 sudo chown -R root:root $BUILDDIR

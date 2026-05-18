@@ -12,5 +12,9 @@ dist/
 installer/windows/*.exe
 installer/macos/target/*
 installer/debian/*.deb
-installer/debian/certuploader/*
-!installer/debian/certuploader/DEBIAN/
+installer/debian/remotepointer/*
+!installer/debian/remotepointer/DEBIAN/
+!installer/debian/remotepointer/etc/
+!installer/debian/remotepointer/usr/
+installer/debian/remotepointer/usr/bin
+installer/debian/remotepointer/usr/share/remotepointer

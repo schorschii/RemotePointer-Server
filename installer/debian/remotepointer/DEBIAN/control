@@ -1,0 +1,7 @@
+Package: RemotePointer
+Version: 3.0
+Section: base
+Priority: optional
+Architecture: all
+Maintainer: Georg Sieber <it@georg-sieber.de>
+Description: Control you computer's keyboard and mouse and display a digital lase pointer using your smartphone.

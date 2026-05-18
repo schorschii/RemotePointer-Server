@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=RemotePointer
+Exec=/usr/bin/remotepointer
+Terminal=false
+Comment=Control keyboard and mouse with your smartphone
+Comment[de_DE]=Tastatur und Maus mit dem Smartphone steuern
+Icon=/usr/share/remotepointer/res/icon.png
+Categories=Application;Utility
