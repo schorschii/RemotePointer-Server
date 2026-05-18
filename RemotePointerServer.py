@@ -27,7 +27,7 @@ else:
 
 DEFAULT_CONFIG = {
     'pointer': {
-        'style': 'res/pointers/Cursor.png',
+        'style': '',
         'speed': 13,
     },
     'mouse': {
@@ -91,14 +91,13 @@ class PointerWindow(QtWidgets.QDialog):
         self.setLayout(self.layout)
 
 class ControlListener(threading.Thread):
-    def __init__(self, listenPort, code, pointerStyle, pointerSpeed, mouseSpeed, *args, **kwargs):
+    def __init__(self, listenPort, code, evtPointerShowHide, evtPointerMove, mouseSpeed, *args, **kwargs):
         self.listenPort = listenPort
         self.code = code
-        self.pointerStyle = pointerStyle
-        self.pointerSpeed = pointerSpeed
+        self.evtPointerShowHide = evtPointerShowHide
+        self.evtPointerMove = evtPointerMove
         self.mouseSpeed = mouseSpeed
         self.updatePointer = False
-        self.pointerWindow = PointerWindow()
         pyautogui.PAUSE = 0
         # call Thread constructor
         super(ControlListener, self).__init__(*args, **kwargs)
@@ -128,15 +127,15 @@ class ControlListener(threading.Thread):
                     while True:
                         data = conn.recv(1024).decode()
                         if not data: break
-                        self.handleMessage(data.strip())
+                        for d in data.split('\n'):
+                            self.handleMessage(d)
 
     def handleMessage(self, data):
         if data == 'START':
-            self.pointerWindow.show()
-            self.pointerWindow.img.setPixmap(QtGui.QPixmap(self.pointerStyle))
+            self.evtPointerShowHide.emit(True)
             self.updatePointer = True
         elif data == 'STOP':
-            self.pointerWindow.hide()
+            self.evtPointerShowHide.emit(False)
             self.updatePointer = False
         elif data == 'PREV': pyautogui.press('pageup')
         elif data == 'NEXT': pyautogui.press('pagedown')
@@ -169,11 +168,8 @@ class ControlListener(threading.Thread):
         else:
             splitter = data.split('|')
             if(len(splitter) == 3):
-                if(splitter[0] == 'S'):
-                    dx = float(splitter[1]) * self.pointerSpeed
-                    dy = float(splitter[2]) * self.pointerSpeed
-                    currentPos = self.pointerWindow.pos()
-                    self.pointerWindow.move(int(currentPos.x() + dx), int(currentPos.y() + dy))
+                if(splitter[0] == 'S' and self.updatePointer):
+                    self.evtPointerMove.emit(float(splitter[1]), float(splitter[2]))
                 elif(splitter[0] == 'M'):
                     dx = float(splitter[1]) * self.mouseSpeed
                     dy = float(splitter[2]) * self.mouseSpeed
@@ -252,9 +248,17 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         QtCore.QCoreApplication.exit()
 
 class MainWindow(QtWidgets.QMainWindow):
+    evtPointerShowHide = QtCore.pyqtSignal(bool)
+    evtPointerMove = QtCore.pyqtSignal(float, float)
+
     def __init__(self, config, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
         self.config = config
+
+        # register event handler
+        self.pointerWindow = PointerWindow()
+        self.evtPointerShowHide.connect(self.evtPointerShowHideHandler)
+        self.evtPointerMove.connect(self.evtPointerMoveHandler)
 
         # icons
         self.pathImgLogo = os.path.dirname(os.path.realpath(__file__))+'/res/icon.png'
@@ -383,8 +387,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.listener = ControlListener(
             int(self.config['server']['listenPort']),
             self.config['server']['code'],
-            self.config['pointer']['style'],
-            int(self.config['pointer']['speed']),
+            self.evtPointerShowHide,
+            self.evtPointerMove,
             int(self.config['mouse']['speed']),
         )
         self.listener.start()
@@ -399,6 +403,19 @@ class MainWindow(QtWidgets.QMainWindow):
         return (palette.color(QtGui.QPalette.ColorRole.Window).red() < 100
             and palette.color(QtGui.QPalette.ColorRole.Window).green() < 100
             and palette.color(QtGui.QPalette.ColorRole.Window).blue() < 100)
+
+    def evtPointerShowHideHandler(self, visible):
+        if(visible == True):
+            self.pointerWindow.show()
+            self.pointerWindow.img.setPixmap(QtGui.QPixmap(self.config['pointer']['style']))
+        elif(visible == False):
+            self.pointerWindow.hide()
+    def evtPointerMoveHandler(self, dx, dy):
+        if(dx and dy):
+            dx = dx * int(self.config['pointer']['speed'])
+            dy = dy * int(self.config['pointer']['speed'])
+            currentPos = self.pointerWindow.pos()
+            self.pointerWindow.move(int(currentPos.x() + dx), int(currentPos.y() + dy))
 
     def getHostname(self):
         if(self.config['server'].get('hostname')):
@@ -461,6 +478,16 @@ if __name__ == '__main__':
     # generate code if empty (first run)
     if(not config['server'].get('code')):
         config.set('server', 'code', generateCode())
+    # set red pointer as default if empty (first run)
+    # path separators vary if on win32, that's why not working in DEFAULT_CONFIG
+    if(not os.path.exists(config['pointer'].get('style'))):
+        allPointers = glob.glob('res/pointers/*')
+        if(allPointers):
+            for pointer in allPointers:
+                if('red' in pointer.lower()):
+                    config.set('pointer', 'style', pointer)
+            if(not config['pointer'].get('style')):
+                config.set('pointer', 'style', allPointers[0])
     saveSettings(config)
 
     # parse cmd args
