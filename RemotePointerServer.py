@@ -109,6 +109,7 @@ class ControlListener(threading.Thread):
                 self.openSocket()
             except Exception as e:
                 print(e)
+                time.sleep(0.1)
 
     def openSocket(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -149,7 +150,7 @@ class ControlListener(threading.Thread):
         elif data == 'UP': pyautogui.press('up')
         elif data == 'DOWN': pyautogui.press('down')
         elif data == 'LEFT': pyautogui.press('left')
-        elif data == 'RIGHT': pyautogui.press('RIGHT')
+        elif data == 'RIGHT': pyautogui.press('right')
         elif data == 'F1': pyautogui.press('f1')
         elif data == 'F2': pyautogui.press('f2')
         elif data == 'F3': pyautogui.press('f3')
