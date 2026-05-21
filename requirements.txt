@@ -1,3 +1,4 @@
 PyQt6
 pyautogui
 psutil
+evdev; sys_platform == "linux"
