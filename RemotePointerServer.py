@@ -5,7 +5,6 @@ from locale import getlocale
 
 from functools import partial
 from pathlib import Path
-import path
 import pyautogui
 import socket
 import psutil
@@ -27,7 +26,7 @@ else:
     CONFIG_DIR  = os.path.expanduser('~/.config')
 os.makedirs(CONFIG_DIR, exist_ok=True)
 CONFIG_FILE = CONFIG_DIR + '/RemotePointer.ini'
-POINTERS_DIR = (path.dirname(sys.executable) if getattr(sys, 'frozen', False) else sys.path[0]) + '/res/pointers'
+POINTERS_DIR = (os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else sys.path[0]) + '/res/pointers'
 
 DEFAULT_CONFIG = {
     'pointer': {
