@@ -5,6 +5,7 @@ from locale import getlocale
 
 from functools import partial
 from pathlib import Path
+import path
 import pyautogui
 import socket
 import psutil
@@ -26,6 +27,7 @@ else:
     CONFIG_DIR  = os.path.expanduser('~/.config')
 os.makedirs(CONFIG_DIR, exist_ok=True)
 CONFIG_FILE = CONFIG_DIR + '/RemotePointer.ini'
+POINTERS_DIR = (path.dirname(sys.executable) if getattr(sys, 'frozen', False) else sys.path[0]) + '/res/pointers'
 
 DEFAULT_CONFIG = {
     'pointer': {
@@ -327,7 +329,7 @@ class MainWindow(QtWidgets.QMainWindow):
         laserpointerAction = optionsMenu.addMenu(QtWidgets.QApplication.translate(APP_NAME, '&Laserpointer Style'))
         laserpointerStyleActionGroup = QtGui.QActionGroup(self)
         laserpointerStyleActionGroup.setExclusive(True)
-        for file in glob.glob('res/pointers/*'):
+        for file in glob.glob(POINTERS_DIR+'/*'):
             actionButton = laserpointerStyleActionGroup.addAction(QtGui.QAction(Path(file).stem, self, checkable=True))
             actionButton.triggered.connect(partial(self.clickLaserpointerStyle, file, actionButton))
             actionButton.style = file
@@ -503,7 +505,7 @@ if __name__ == '__main__':
     # set red pointer as default if empty (first run)
     # path separators vary if on win32, that's why not working in DEFAULT_CONFIG
     if(not os.path.exists(config['pointer'].get('style'))):
-        allPointers = glob.glob('res/pointers/*')
+        allPointers = glob.glob(POINTERS_DIR+'/*')
         if(allPointers):
             for pointer in allPointers:
                 if('red' in pointer.lower()):
