@@ -147,8 +147,8 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ needs.create_release_deb.outputs.upload_url }}
-          asset_path: installer/macos/RemotePointer.dmg
-          asset_name: RemotePointer.dmg
+          asset_path: installer/macos/target/pkg/RemotePointer.pkg
+          asset_name: RemotePointer.pkg
           asset_content_type: application/octet-stream
 
   create_exe:
