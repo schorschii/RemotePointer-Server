@@ -99,6 +99,10 @@ class ControlListener(threading.Thread):
         self.mouseSpeed = mouseSpeed
         self.updatePointer = False
         pyautogui.PAUSE = 0
+        # Linux special
+        if(sys.platform == 'linux'):
+            import evdev
+            self.vinput = evdev.UInput()
         # call Thread constructor
         super(ControlListener, self).__init__(*args, **kwargs)
         self.daemon = True
@@ -138,6 +142,7 @@ class ControlListener(threading.Thread):
         elif data == 'STOP':
             self.evtPointerShowHide.emit(False)
             self.updatePointer = False
+
         elif data == 'PREV': pyautogui.press('pageup')
         elif data == 'NEXT': pyautogui.press('pagedown')
         elif data == 'RETURN': pyautogui.press('return')
@@ -163,9 +168,36 @@ class ControlListener(threading.Thread):
         elif data == 'F10': pyautogui.press('f10')
         elif data == 'F11': pyautogui.press('f11')
         elif data == 'F12': pyautogui.press('f12')
+
+        elif data == 'VOLUMEUP':
+            if(sys.platform == 'win32'):
+                pyautogui.press('volumeup')
+            elif(sys.platform == 'darwin'):
+                pyautogui.press('KEYTYPE_SOUND_UP')
+            elif(sys.platform == 'linux'):
+                self.vinput.write(evdev.ecodes.EV_KEY, evdev.ecodes.KEY_VOLUMEUP, 1); self.vinput.syn()
+                self.vinput.write(evdev.ecodes.EV_KEY, evdev.ecodes.KEY_VOLUMEUP, 0); self.vinput.syn()
+        elif data == 'VOLUMEDOWN':
+            if(sys.platform == 'win32'):
+                pyautogui.press('volumedown')
+            elif(sys.platform == 'darwin'):
+                pyautogui.press('KEYTYPE_SOUND_DOWN')
+            elif(sys.platform == 'linux'):
+                self.vinput.write(evdev.ecodes.EV_KEY, evdev.ecodes.KEY_VOLUMEDOWN, 1); self.vinput.syn()
+                self.vinput.write(evdev.ecodes.EV_KEY, evdev.ecodes.KEY_VOLUMEDOWN, 0); self.vinput.syn()
+        elif data == 'MUTE':
+            if(sys.platform == 'win32'):
+                pyautogui.press('volumemute')
+            elif(sys.platform == 'darwin'):
+                pyautogui.press('KEYTYPE_MUTE')
+            elif(sys.platform == 'linux'):
+                self.vinput.write(evdev.ecodes.EV_KEY, evdev.ecodes.KEY_MUTE, 1); self.vinput.syn()
+                self.vinput.write(evdev.ecodes.EV_KEY, evdev.ecodes.KEY_MUTE, 0); self.vinput.syn()
+
         elif data.startswith('TEXT|'):
             text = data[5:]
             pyautogui.write(text)
+
         else:
             splitter = data.split('|')
             if(len(splitter) == 3):
