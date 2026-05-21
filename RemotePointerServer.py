@@ -21,9 +21,11 @@ APP_NAME    = 'RemotePointer'
 APP_VERSION = '3.0'
 
 if sys.platform == 'win32':
-    CONFIG_FILE = os.path.expanduser('~/AppData/Local/RemotePointer.ini')
+    CONFIG_DIR  = os.path.expanduser('~/AppData/Local')
 else:
-    CONFIG_FILE = os.path.expanduser('~/.config/RemotePointer.ini')
+    CONFIG_DIR  = os.path.expanduser('~/.config')
+os.makedirs(CONFIG_DIR, exist_ok=True)
+CONFIG_FILE = CONFIG_DIR + '/RemotePointer.ini'
 
 DEFAULT_CONFIG = {
     'pointer': {
