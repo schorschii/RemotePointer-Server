@@ -7,7 +7,7 @@ a = Analysis(
     binaries=[],
     datas=[
         ('res/*.png', 'res/'),
-        ('res/pointers/*.png', 'res/pointers/'),
+        ('res/pointers/*', 'res/pointers/'),
         ('lang/*.qm', 'lang/'),
     ],
     hiddenimports=[],
