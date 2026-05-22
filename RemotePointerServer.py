@@ -26,7 +26,11 @@ else:
     CONFIG_DIR  = os.path.expanduser('~/.config')
 os.makedirs(CONFIG_DIR, exist_ok=True)
 CONFIG_FILE = CONFIG_DIR + '/RemotePointer.ini'
+
 POINTERS_DIR = (os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else sys.path[0]) + '/res/pointers'
+# for packed .app on macOS
+if(sys.platform == 'darwin' and not os.path.exists(POINTERS_DIR)):
+    POINTERS_DIR = os.path.dirname(sys.executable) + '/../Resources/res/pointers'
 
 DEFAULT_CONFIG = {
     'pointer': {
