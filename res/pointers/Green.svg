@@ -2,13 +2,13 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   width="38"
-   height="38"
-   viewBox="0 0 10.054166 10.054167"
+   width="28"
+   height="28"
+   viewBox="0 0 7.4083328 7.4083336"
    version="1.1"
    id="svg5"
    inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
-   sodipodi:docname="dot.svg"
+   sodipodi:docname="Green.svg"
    inkscape:export-filename="red.png"
    inkscape:export-xdpi="80.842102"
    inkscape:export-ydpi="80.842102"
@@ -27,9 +27,9 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
      showgrid="false"
-     inkscape:zoom="5.2813178"
-     inkscape:cx="-2.4615069"
-     inkscape:cy="20.070748"
+     inkscape:zoom="7.4689113"
+     inkscape:cx="-4.150538"
+     inkscape:cy="20.351025"
      inkscape:window-width="2560"
      inkscape:window-height="1368"
      inkscape:window-x="0"
@@ -42,11 +42,12 @@
      inkscape:label="Ebene 1"
      inkscape:groupmode="layer"
      id="layer1">
-    <circle
-       style="opacity:1;fill:#ff0000;fill-opacity:1;stroke:#ffffff;stroke-width:0.523419;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+    <ellipse
+       style="opacity:1;fill:#14b419;fill-opacity:0.8481577;stroke:#ffffff;stroke-width:0.529167;stroke-linecap:butt;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
        id="path234"
-       cx="5.0270834"
-       cy="5.0270834"
-       r="4.7653737" />
+       cx="3.7041667"
+       cy="3.7041667"
+       rx="3.4153614"
+       ry="3.4153612" />
   </g>
 </svg>
