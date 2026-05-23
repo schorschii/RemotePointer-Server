@@ -5,7 +5,7 @@ set -e
 SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 TARGET_DIRECTORY="$SCRIPTPATH/target"
 PRODUCT="RemotePointer"
-VERSION="3.0"
+VERSION="3.1"
 TARGET_FILENAME="RemotePointer.pkg"
 #DEVELOPER_ID_INSTALLER_CERT_NAME=""
 #DEVELOPER_ACCOUNT_USERNAME=""
