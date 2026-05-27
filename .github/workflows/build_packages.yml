@@ -32,7 +32,6 @@ jobs:
         run: |
           python3 -m venv venv
           venv/bin/pip3 install pyinstaller
-          venv/bin/pip3 install ./pyautogui
           venv/bin/pip3 install -r requirements.txt
           venv/bin/pyinstaller RemotePointerServer.linux.spec
 
@@ -122,7 +121,6 @@ jobs:
         run: |
           python -m venv venv
           venv/bin/pip3 install pyinstaller
-          venv/bin/pip3 install ./pyautogui
           venv/bin/pip3 install -r requirements.txt
           venv/bin/pyinstaller RemotePointerServer.macos.spec
 
@@ -199,7 +197,6 @@ jobs:
         run: |
           python -m venv venv
           venv/bin/pip3 install pyinstaller
-          venv/bin/pip3 install ./pyautogui
           venv/bin/pip3 install -r requirements.txt
           venv/bin/pyinstaller RemotePointerServer.macos.spec
 
