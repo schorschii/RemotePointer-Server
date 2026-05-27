@@ -63,8 +63,8 @@ class AdvertiseBroadcast(threading.Thread):
         self.daemon = True
 
     def run(self, *args, **kwargs):
-        ifaces = psutil.net_if_addrs()
         while True:
+            ifaces = psutil.net_if_addrs()
             for ifacename, iface in ifaces.items():
                 for snic in iface:
                     if(snic.family != socket.AF_INET): continue
@@ -80,7 +80,7 @@ class AdvertiseBroadcast(threading.Thread):
                         except Exception as e:
                             print(e)
                             continue
-            time.sleep(0.8)
+            time.sleep(0.9)
 
 class PointerWindow(QtWidgets.QDialog):
     def __init__(self, parent=None):
