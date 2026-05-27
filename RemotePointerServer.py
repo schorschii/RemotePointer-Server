@@ -5,7 +5,8 @@ from locale import getlocale
 
 from functools import partial
 from pathlib import Path
-import pyautogui
+from pynput.mouse import Button, Controller as MouseController
+from pynput.keyboard import Key, Controller as KeyboardController
 import socket
 import psutil
 import threading
@@ -105,7 +106,8 @@ class ControlListener(threading.Thread):
         self.evtPointerMove = evtPointerMove
         self.mouseSpeed = mouseSpeed
         self.updatePointer = False
-        pyautogui.PAUSE = 0
+        self.mouse = MouseController()
+        self.keyboard = KeyboardController()
         # call Thread constructor
         super(ControlListener, self).__init__(*args, **kwargs)
         self.daemon = True
@@ -146,51 +148,42 @@ class ControlListener(threading.Thread):
             self.evtPointerShowHide.emit(False)
             self.updatePointer = False
 
-        elif data == 'PREV': pyautogui.press('pageup')
-        elif data == 'NEXT': pyautogui.press('pagedown')
-        elif data == 'RETURN': pyautogui.press('return')
-        elif data == 'BACKSPACE': pyautogui.press('backspace')
-        elif data == 'ESCAPE': pyautogui.press('escape')
-        elif data == 'MDOWN': pyautogui.mouseDown(button='left')
-        elif data == 'MUP': pyautogui.mouseUp(button='left')
-        elif data == 'MLEFT': pyautogui.click(button='left')
-        elif data == 'MRIGHT': pyautogui.click(button='right')
-        elif data == 'UP': pyautogui.press('up')
-        elif data == 'DOWN': pyautogui.press('down')
-        elif data == 'LEFT': pyautogui.press('left')
-        elif data == 'RIGHT': pyautogui.press('right')
-        elif data == 'F1': pyautogui.press('f1')
-        elif data == 'F2': pyautogui.press('f2')
-        elif data == 'F3': pyautogui.press('f3')
-        elif data == 'F4': pyautogui.press('f4')
-        elif data == 'F5': pyautogui.press('f5')
-        elif data == 'F6': pyautogui.press('f6')
-        elif data == 'F7': pyautogui.press('f7')
-        elif data == 'F8': pyautogui.press('f8')
-        elif data == 'F9': pyautogui.press('f9')
-        elif data == 'F10': pyautogui.press('f10')
-        elif data == 'F11': pyautogui.press('f11')
-        elif data == 'F12': pyautogui.press('f12')
+        elif data == 'PREV': self.keyboard.tap(Key.page_up)
+        elif data == 'NEXT': self.keyboard.tap(Key.page_down)
+        elif data == 'RETURN': self.keyboard.tap(Key.enter)
+        elif data == 'BACKSPACE': self.keyboard.tap(Key.backspace)
+        elif data == 'ESCAPE': self.keyboard.tap(Key.esc)
+        elif data == 'MDOWN': self.mouse.press(Button.left)
+        elif data == 'MUP': self.mouse.release(Button.left)
+        elif data == 'MLEFT': self.mouse.click(Button.left)
+        elif data == 'MRIGHT': self.mouse.click(Button.right)
+        elif data == 'UP': self.keyboard.tap(Key.up)
+        elif data == 'DOWN': self.keyboard.tap(Key.down)
+        elif data == 'LEFT': self.keyboard.tap(Key.left)
+        elif data == 'RIGHT': self.keyboard.tap(Key.right)
+        elif data == 'F1': self.keyboard.tap(Key.f1)
+        elif data == 'F2': self.keyboard.tap(Key.f2)
+        elif data == 'F3': self.keyboard.tap(Key.f3)
+        elif data == 'F4': self.keyboard.tap(Key.f4)
+        elif data == 'F5': self.keyboard.tap(Key.f5)
+        elif data == 'F6': self.keyboard.tap(Key.f6)
+        elif data == 'F7': self.keyboard.tap(Key.f7)
+        elif data == 'F8': self.keyboard.tap(Key.f8)
+        elif data == 'F9': self.keyboard.tap(Key.f9)
+        elif data == 'F10': self.keyboard.tap(Key.f10)
+        elif data == 'F11': self.keyboard.tap(Key.f11)
+        elif data == 'F12': self.keyboard.tap(Key.f12)
 
         elif data == 'VOLUMEUP':
-            if(sys.platform == 'darwin'):
-                pyautogui.press('KEYTYPE_SOUND_UP')
-            else:
-                pyautogui.press('volumeup')
+            self.keyboard.tap(Key.media_volume_up)
         elif data == 'VOLUMEDOWN':
-            if(sys.platform == 'darwin'):
-                pyautogui.press('KEYTYPE_SOUND_DOWN')
-            else:
-                pyautogui.press('volumedown')
+            self.keyboard.tap(Key.media_volume_down)
         elif data == 'MUTE':
-            if(sys.platform == 'darwin'):
-                pyautogui.press('KEYTYPE_MUTE')
-            else:
-                pyautogui.press('volumemute')
+            self.keyboard.tap(Key.media_volume_mute)
 
         elif data.startswith('TEXT|'):
             text = data[5:]
-            pyautogui.write(text)
+            self.keyboard.type(text)
 
         else:
             splitter = data.split('|')
@@ -200,7 +193,7 @@ class ControlListener(threading.Thread):
                 elif(splitter[0] == 'M'):
                     dx = float(splitter[1]) * self.mouseSpeed
                     dy = float(splitter[2]) * self.mouseSpeed
-                    pyautogui.move(dx, dy)
+                    self.mouse.move(dx, dy)
 
 class AboutWindow(QtWidgets.QDialog):
     def __init__(self, *args, **kwargs):
