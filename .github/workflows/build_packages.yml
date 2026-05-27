@@ -196,7 +196,7 @@ jobs:
       - name: Create venv, install Python packages, compile binaries
         run: |
           python -m venv venv
-          venv/bin/pip3 install pyinstaller
+          venv/bin/pip3 install pyinstaller pillow
           venv/bin/pip3 install -r requirements.txt
           venv/bin/pyinstaller RemotePointerServer.macos.spec
 
