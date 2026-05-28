@@ -20,7 +20,7 @@ import glob
 import secrets
 
 APP_NAME    = 'RemotePointer'
-APP_VERSION = '3.1'
+APP_VERSION = '3.2'
 
 if sys.platform == 'win32':
     CONFIG_DIR  = os.path.expanduser('~/AppData/Local')

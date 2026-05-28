@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "RemotePointer"
-#define MyAppVersion "3.1"
+#define MyAppVersion "3.2"
 #define MyAppPublisher "Sieber Systems"
 #define MyAppURL "https://github.com/schorschii/remotepointer-server"
 #define MyAppExeName "RemotePointerServer.exe"
