@@ -3,6 +3,6 @@ Version: 3.1
 Section: base
 Priority: optional
 Architecture: all
-Depends: libxcb-cursor0
+Depends: python3-pyqt6, python3-pynput, python3-psutil, libxcb-cursor0
 Maintainer: Georg Sieber <it@georg-sieber.de>
 Description: Control you computer's keyboard and mouse and display a digital laser pointer using your smartphone.

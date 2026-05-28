@@ -20,11 +20,13 @@ if [ -d "$BUILDDIR/$INSTALLDIR" ]; then
 fi
 
 # copy files in place
-cp -r   ../../dist/RemotePointerServer   $BUILDDIR/$INSTALLDIR
+sudo mkdir -p $BUILDDIR/$INSTALLDIR/
+cp      ../../RemotePointerServer.py   $BUILDDIR/$INSTALLDIR/
+cp -r   ../../res                      $BUILDDIR/$INSTALLDIR/res
 
 # make binary available in PATH
 sudo mkdir -p $BUILDDIR/usr/bin
-sudo ln -sf   $INSTALLDIR/RemotePointerServer   $BUILDDIR/usr/bin/remotepointer
+sudo ln -sf   $INSTALLDIR/RemotePointerServer.py   $BUILDDIR/usr/bin/remotepointer
 
 # set file permissions
 sudo chown -R root:root $BUILDDIR
