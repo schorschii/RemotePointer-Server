@@ -21,8 +21,8 @@ fi
 
 # copy files in place
 sudo mkdir -p $BUILDDIR/$INSTALLDIR/
-cp      ../../RemotePointerServer.py   $BUILDDIR/$INSTALLDIR/
-cp -r   ../../res                      $BUILDDIR/$INSTALLDIR/res
+sudo cp      ../../RemotePointerServer.py   $BUILDDIR/$INSTALLDIR/
+sudo cp -r   ../../res                      $BUILDDIR/$INSTALLDIR/res
 
 # make binary available in PATH
 sudo mkdir -p $BUILDDIR/usr/bin
