@@ -7,6 +7,7 @@ from functools import partial
 from pathlib import Path
 from pynput.mouse import Button, Controller as MouseController
 from pynput.keyboard import Key, Controller as KeyboardController
+import pyperclip
 import socket
 import psutil
 import threading
@@ -108,9 +109,27 @@ class ControlListener(threading.Thread):
         self.updatePointer = False
         self.mouse = MouseController()
         self.keyboard = KeyboardController()
+        self.connection = None
         # call Thread constructor
         super(ControlListener, self).__init__(*args, **kwargs)
         self.daemon = True
+        # setup cliboard watcher
+        t = threading.Thread(target=self.clipboardWatcher)
+        t.daemon = True # exit when main thread exits
+        t.start()
+
+    def clipboardWatcher(self):
+        self.recentClipboard = ''
+        while True:
+            try:
+                tmpValue = pyperclip.paste()
+                if tmpValue != self.recentClipboard:
+                    self.recentClipboard = tmpValue
+                    if self.connection:
+                        self.connection.sendall(('CLIPBOARD|'+tmpValue+'\n').encode('utf-8'))
+            except Exception:
+                pass
+            time.sleep(0.2)
 
     def run(self, *args, **kwargs):
         while True:
@@ -125,17 +144,18 @@ class ControlListener(threading.Thread):
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.bind(('0.0.0.0', self.listenPort))
             sock.listen(0)
-            conn, address = sock.accept()
-            with conn:
+            connection, address = sock.accept()
+            with connection:
                 print('Connection from: ' + str(address))
-                conn.sendall('HELLO!\n'.encode('utf-8'))
-                clientCode = conn.recv(1024).decode()
+                connection.sendall('HELLO!\n'.encode('utf-8'))
+                clientCode = connection.recv(1024).decode()
                 if not clientCode or clientCode.strip() != self.code:
-                    conn.sendall('AUTHFAILED\n'.encode('utf-8'))
+                    connection.sendall('AUTHFAILED\n'.encode('utf-8'))
                     print('Invalid code:', clientCode)
                 else:
+                    self.connection = connection
                     while True:
-                        data = conn.recv(1024).decode()
+                        data = connection.recv(1024).decode()
                         if not data: break
                         for d in data.split('\n'):
                             self.handleMessage(d)
@@ -180,6 +200,11 @@ class ControlListener(threading.Thread):
             self.keyboard.tap(Key.media_volume_down)
         elif data == 'MUTE':
             self.keyboard.tap(Key.media_volume_mute)
+
+        elif data.startswith('CLIPBOARD|'):
+            text = data[10:]
+            self.recentClipboard = text
+            pyperclip.copy(text)
 
         elif data.startswith('TEXT|'):
             text = data[5:]

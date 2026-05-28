@@ -1,3 +1,4 @@
 PyQt6
 pynput==1.8.2
+pyperclip==1.8.2
 psutil
